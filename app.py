@@ -1,10 +1,10 @@
 import streamlit as st 
-
+from dotenv import load_dotenv
 
 
 
 def main():
-
+    load_dotenv()
     # Design page layout 
     st.set_page_config(page_title="Chat with Multiple PDFs", page_icon=":books:")
     st.header("Chat with Multiple PDFs :books:")
@@ -13,8 +13,8 @@ def main():
     # Side bar 
     with st.sidebar:
         st.subheader("Your Documents")
-        st.file_uploader("Upload your PDFs and click 'Process' ")
+        pdf_docs = st.file_uploader("Upload your PDFs and click 'Process' ", accept_multiple_files=True)
         st.button("Process")
-        
+
 if __name__ == "__main__":
     main()
