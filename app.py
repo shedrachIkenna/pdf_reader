@@ -5,7 +5,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_voyageai import VoyageAIEmbeddings
+from sentence_transformers import SentenceTransformer
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -28,11 +28,15 @@ def get_text_chunks(text):
 
 
 def get_vectorstore(text_chunks):
-    embeddings = VoyageAIEmbeddings(
-        voyage_api_key="[ Your Voyage API key ]", model="voyage-large-2-instruct"
+    model = SentenceTransformer(
+        "dunzhang/stella_en_400M_v5",
+        trust_remote_code=True,
+        device="cpu",
+        config_kwargs={"use_memory_efficient_attention": False, "unpad_inputs": False}
     )
-    documents_embds = embeddings.embed_documents(text_chunks)
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=documents_embds)
+    doc_embeddings = model.encode(text_chunks)
+    
+    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=doc_embeddings)
     
 
     return vectorstore
