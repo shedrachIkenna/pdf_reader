@@ -28,18 +28,45 @@ def get_text_chunks(text):
 
 
 def get_vectorstore(text_chunks):
-    model = SentenceTransformer(
-        "dunzhang/stella_en_400M_v5",
-        trust_remote_code=True,
-        device="cpu",
-        config_kwargs={"use_memory_efficient_attention": False, "unpad_inputs": False}
-    )
-    doc_embeddings = model.encode(text_chunks)
+    try:
+        # Attempt to use a specific model with fallback
+        try:
+            model = SentenceTransformer(
+                "dunzhang/stella_en_1.5B_v5",
+                trust_remote_code=True,
+                device="cpu"
+            )
+        except Exception as model_load_error:
+            st.warning(f"Failed to load specific model: {model_load_error}")
+            model = SentenceTransformer(
+                'all-MiniLM-L6-v2',  # Fallback to a reliable model
+                device="cpu"
+            )
+        
+        # Generate embeddings
+        try:
+            # Ensure embeddings are generated as a numpy array
+            doc_embeddings = model.encode(text_chunks)
+            
+            # Create custom embedding function for FAISS
+            def embedding_func(texts):
+                return model.encode(texts)
+            
+            # Create vector store
+            vectorstore = FAISS.from_texts(
+                texts=text_chunks, 
+                embedding=embedding_func
+            )
+            
+            return vectorstore
+        
+        except Exception as embedding_error:
+            st.error(f"Error generating embeddings: {embedding_error}")
+            return None
     
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=doc_embeddings)
-    
-
-    return vectorstore
+    except Exception as e:
+        st.error(f"Unexpected error in vectorstore creation: {e}")
+        return None
     
 
 
